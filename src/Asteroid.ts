@@ -36,16 +36,16 @@ export default class Asteroid extends Rectangle {
   public explosionParticles() {
     if(this.game) {
     for(let i= 0;i<10;i++) {
-      const particle = this.game.addGameObject(new Particle(this.localToWorldPosition({ x: this.size/2 * (Math.random()-0.5), y: this.size/2 * (Math.random()-0.5)}),{x:Math.min(this.size/2,12.5),y:Math.min(this.size/2,12.5)},{graphics:{color:0x4D90AE}}));
-      Body.applyForce(particle.body,particle.body.position,Vector.rotate({x:0,y:0.005*Math.random()*Math.pow(this.size,2)*0.001},Math.random()*(Math.PI*2)));
+      const particle = this.game.addGameObject(new Particle(this.localToWorldPosition({ x: this.size/2 * (Math.random()-0.5), y: this.size/2 * (Math.random()-0.5)}),{x:Math.max(this.size/4,12.5),y:Math.max(this.size/4,12.5)},{graphics:{color:0x4D90AE}}));
+      Body.applyForce(particle.body,particle.body.position,Vector.rotate({x:0,y:0.005*Math.random()*Math.pow(this.size,2)*0.002},Math.random()*(Math.PI*2)));
       Body.setAngularVelocity(particle.body, Math.random()*0.01);
     }}
   }
 
   public explode() {
     if(this.game && this.canExplode && this.size <= this.minimumSize && this.autoRemove) {
-      this.game.removeGameObject(this);
       this.explosionParticles();
+      this.game.removeGameObject(this);
     }
     if (this.game && this.canExplode && this.size > this.minimumSize) {
       for (let i = 0; i < this.particles; i++) {

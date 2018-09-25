@@ -50,7 +50,12 @@ export class Game {
   public viewportOptions: IViewportOptions = Options.viewport;
 
   public start(renderTarget: HTMLElement) {
-    this.pixiRenderer = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, antialias: true });
+    this.pixiRenderer = new PIXI.Application({
+      antialias: true,
+      backgroundColor: 0x100613,
+      height: window.innerHeight,
+      width: window.innerWidth,
+    });
     renderTarget.appendChild(this.pixiRenderer.view);
 
     this.pixiTicker = new PIXI.ticker.Ticker();
@@ -98,15 +103,34 @@ export class Game {
 
     Input.startListening();
 
+    this.engine.enableSleeping = true;
     this.engine.world.gravity = { x: 0, y: 0, scale: 0 };
 
     const player = new Player(this);
     this.viewportOptions.followTarget = player;
+    this.viewportOptions.zoom = 1.2 / 3;
     this.addGameObject(player);
 
     const generator = Seed(Options.game.RNGSeed);
-    for (let i = 0; i < 500; i++) {
-      const box = new Asteroid({ x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 }, {rotation:  generator() * (Math.PI / 2)});
+    for (let i = 0; i < 200; i++) {
+      const box = new Asteroid(
+        { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
+        { rotation: generator() * (Math.PI / 2) }
+      );
+      this.addGameObject(box);
+    }
+    for (let i = 0; i < 200; i++) {
+      const box = new Asteroid(
+        { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
+        { rotation: generator() * (Math.PI / 2), particles: 3 }
+      );
+      this.addGameObject(box);
+    }
+    for (let i = 0; i < 200; i++) {
+      const box = new Asteroid(
+        { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
+        { rotation: generator() * (Math.PI / 2), particles: 4 }
+      );
       this.addGameObject(box);
     }
 

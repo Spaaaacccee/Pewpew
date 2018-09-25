@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@pixi/filter-advanced-bloom": "^2.6.0",
+    "@pixi/filter-simple-lightmap": "^2.6.0",
+    "@types/antd": "^1.0.0",
     "@types/matter-js": "^0.10.1",
     "@types/pixi.js": "^4.8.1",
     "@types/seed-random": "^2.2.0",
+    "antd": "^3.9.3",
     "matter-js": "^0.14.2",
     "pixi.js": "^4.8.2",
     "react": "^16.5.2",

@@ -28,9 +28,19 @@ export default class Player extends Bullet {
         this.localToWorldPosition({ x: 25, y: 25 }),
         Matter.Vector.rotate({ x: 0, y: -0.003 }, this.body.angle)
       );
-      const particle = game.addGameObject(new Particle(this.localToWorldPosition({ x: 25+(Math.random()*10-5), y: 25+(Math.random()*5-2.5) }),{x:5,y:5}));
-      Matter.Body.applyForce(particle.body,particle.body.position,Matter.Vector.rotate({x:0,y:0.0005*Math.random()},this.body.angle+(0.5*(Math.random()-0.5))));
-      Matter.Body.setAngularVelocity(particle.body, Math.random()*0.01);
+      const particle = game.addGameObject(
+        new Particle(
+          this.localToWorldPosition({ x: 25 + (Math.random() * 10 - 5), y: 25 + (Math.random() * 5 - 2.5) }),
+          { x: 5, y: 5 },
+          { physics: { angle: Math.random() * (Math.PI / 2) } }
+        )
+      );
+      Matter.Body.applyForce(
+        particle.body,
+        particle.body.position,
+        Matter.Vector.rotate({ x: 0, y: 0.0005 * Math.random() }, this.body.angle + 0.5 * (Math.random() - 0.5))
+      );
+      Matter.Body.setAngularVelocity(particle.body, Math.random() * 0.01);
     });
     Input.whileKeyDown("a", () => {
       Matter.Body.applyForce(
@@ -38,9 +48,19 @@ export default class Player extends Bullet {
         this.localToWorldPosition({ x: -25, y: 25 }),
         Matter.Vector.rotate({ x: 0, y: -0.003 }, this.body.angle)
       );
-      const particle = game.addGameObject(new Particle(this.localToWorldPosition({ x: -25+(Math.random()*10-5), y: 25+(Math.random()*5-2.5) }),{x:5,y:5}));
-      Matter.Body.applyForce(particle.body,particle.body.position,Matter.Vector.rotate({x:0,y:0.0005*Math.random()},this.body.angle+(0.5*(Math.random()-0.5))));
-      Matter.Body.setAngularVelocity(particle.body, Math.random()*0.01);
+      const particle = game.addGameObject(
+        new Particle(
+          this.localToWorldPosition({ x: -25 + (Math.random() * 10 - 5), y: 25 + (Math.random() * 5 - 2.5) }),
+          { x: 5, y: 5 },
+          { physics: { angle: Math.random() * (Math.PI / 2) } }
+        )
+      );
+      Matter.Body.applyForce(
+        particle.body,
+        particle.body.position,
+        Matter.Vector.rotate({ x: 0, y: 0.0005 * Math.random() }, this.body.angle + 0.5 * (Math.random() - 0.5))
+      );
+      Matter.Body.setAngularVelocity(particle.body, Math.random() * 0.01);
     });
     Input.onKeyDown("p", () => {
       const bullet = game.addGameObject(
