@@ -54,7 +54,7 @@ export class Game {
       antialias: true,
       backgroundColor: 0x100613,
       height: window.innerHeight,
-      width: window.innerWidth,
+      width: window.innerWidth
     });
     renderTarget.appendChild(this.pixiRenderer.view);
 
@@ -134,8 +134,15 @@ export class Game {
       this.addGameObject(box);
     }
 
+    let lastFrameTime = Date.now();
     // run the engine
-    Engine.run(this.engine);
+    const physicsLoop = () => {
+      const frameTime = Date.now();
+      Matter.Engine.update(this.engine, (frameTime - lastFrameTime) * (Options.game.simulationSpeedMultiplier || 1));
+      lastFrameTime = frameTime;
+      requestAnimationFrame(physicsLoop);
+    };
+    requestAnimationFrame(physicsLoop);
     this.pixiTicker.start();
   }
 

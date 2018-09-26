@@ -12,6 +12,7 @@ export interface IViewportOptions {
 
 export interface IGameOptions {
   RNGSeed?: string;
+  simulationSpeedMultiplier? : number;
 }
 
 export default new class Options {
@@ -23,6 +24,7 @@ export default new class Options {
     zoomUsesLerp: true
   };;
   public game : IGameOptions = {
-    RNGSeed: "123456789"
+    RNGSeed: "123456789",
+    simulationSpeedMultiplier: 1
   };
 }
