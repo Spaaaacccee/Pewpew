@@ -1,4 +1,5 @@
 import { Vector } from "matter-js";
+import Utils from "./Utils";
 
 export default class Viewport {
   public position: Vector = { x: 0, y: 0 };
@@ -32,14 +33,10 @@ export default class Viewport {
     const viewportRadius = Vector.mult(this.size, 0.5);
     const viewportPosition = this.worldToViewportPosition(position);
 
-    const horizontally = this.between(viewportPosition.x, viewportRadius.x - radius.x, viewportRadius.x + radius.x);
-    const vertically = this.between(viewportPosition.y, viewportRadius.y - radius.y, viewportRadius.y + radius.y);
+    const horizontally = Utils.between(viewportPosition.x, viewportRadius.x - radius.x, viewportRadius.x + radius.x);
+    const vertically = Utils.between(viewportPosition.y, viewportRadius.y - radius.y, viewportRadius.y + radius.y);
     return horizontally && vertically;
   }
 
-  private between(n: number, a: number, b: number, inclusive: boolean = true): boolean {
-    const min = Math.min.apply(Math, [a, b]);
-    const max = Math.max.apply(Math, [a, b]);
-    return inclusive ? n >= min && n <= max : n > min && n < max;
-  }
+
 }

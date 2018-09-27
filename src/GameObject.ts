@@ -1,5 +1,6 @@
 import { Bodies, IChamferableBodyDefinition, Vector } from "matter-js";
 import { Game } from "./Game";
+import Utils from "./Utils";
 import Viewport from "./Viewport";
 
 export interface IGraphicsOptions {
@@ -18,6 +19,12 @@ export default class GameObject {
   constructor(body: Matter.Body, graphics: PIXI.DisplayObject) {
     this.body = body;
     this.graphics = graphics;
+    this.firstFrame();
+    const updateLoop = () => {
+      this.everyFrame();
+      requestAnimationFrame(updateLoop);
+    }
+    requestAnimationFrame(updateLoop);
   }
   public update(viewport: Viewport): void {
     const screenPosition = viewport.worldToViewportPosition(this.body.position);
@@ -29,6 +36,13 @@ export default class GameObject {
 
   public localToWorldPosition(position: Vector): Vector {
     return Vector.add(this.body.position, Vector.rotate(position, this.body.angle));
+  }
+
+  public everyFrame () : void {
+    Utils.noop();
+  }
+  public firstFrame() : void {
+    Utils.noop();
   }
 }
 

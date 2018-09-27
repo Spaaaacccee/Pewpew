@@ -2,6 +2,8 @@ import * as Matter from "matter-js";
 import Asteroid from "./Asteroid";
 import { Game } from "./Game";
 import { IGameObjectOptions, Rectangle } from "./GameObject";
+import Player from "./Player";
+import { EnemyShip } from "./Spaceship";
 
 export interface IBulletOptions extends IGameObjectOptions {
   collisionVelocityThreshold?: number;
@@ -22,17 +24,26 @@ export default class Bullet extends Rectangle {
         );
         if ((this.bulletOptions.collisionVelocityThreshold || 3) <= relativeVelocity) {
           const gameObjects = [pair.bodyA, pair.bodyB].map(x => game.stage.getFromBody(x));
-          if (gameObjects.filter(x => x instanceof Bullet).length === 1) {
-            for (const gameObject of gameObjects) {
-              if (gameObject instanceof Asteroid) {
-                (gameObject as Asteroid).explode();
+          for (const gameObject of gameObjects) {
+            if (gameObject instanceof EnemyShip) {
+              if (gameObjects.filter(x => x instanceof Bullet).length === 2) {
+                (gameObject as EnemyShip).explode();
               }
+            }
+            if (gameObject instanceof Asteroid && gameObjects.filter(x => x instanceof Asteroid).length === 1) {
+              if (gameObjects.find(x => x instanceof Player)) {
+                if ((this.bulletOptions.collisionVelocityThreshold || 3) * 3 <= relativeVelocity) {
+                  (gameObject as Asteroid).explode();
+                }
+                return;
+              }
+              (gameObject as Asteroid).explode();
             }
           }
         }
       }
     });
-    if(this.bulletOptions.despawnAfter) {
+    if (this.bulletOptions.despawnAfter) {
       setTimeout(() => {
         game.removeGameObject(this);
       }, this.bulletOptions.despawnAfter || 5000);

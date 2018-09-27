@@ -6,6 +6,7 @@ import GameObject from "./GameObject";
 import Input from "./Input";
 import Options, { IViewportOptions } from "./Options";
 import Player from "./Player";
+import { EnemyShip } from "./Spaceship";
 import Utils from "./Utils";
 import Viewport from "./Viewport";
 
@@ -57,6 +58,11 @@ export class Game {
       width: window.innerWidth
     });
     renderTarget.appendChild(this.pixiRenderer.view);
+
+    window.onresize = () => {
+      this.pixiRenderer.renderer.resize(window.innerWidth, window.innerHeight);
+      this.viewport.size = { x: window.innerWidth, y: window.innerHeight };
+    };
 
     this.pixiTicker = new PIXI.ticker.Ticker();
 
@@ -111,22 +117,71 @@ export class Game {
     this.viewportOptions.zoom = 1.2 / 3;
     this.addGameObject(player);
 
+    const enemyGenerator = Seed(Options.game.RNGSeed);
+
+    const canvas = document.getElementById("overlay");
+    const enemyLoop = () => {
+      const enemies = this.stage.objects.filter(x => x instanceof EnemyShip);
+      if (enemies.length < 2) {
+        for (let i = 0; i < 4; i++) {
+          const enemy = new EnemyShip(this, {
+            physics: {
+              position: {
+                x: player.body.position.x + (enemyGenerator() - 0.5) * 5000,
+                y: player.body.position.y + (enemyGenerator() - 0.5) * 5000
+              }
+            },
+            target: player
+          });
+          this.addGameObject(enemy);
+        }
+      }
+      if (canvas) {
+        canvas.innerHTML = "";
+        for (const enemy of enemies) {
+          const dist = Matter.Vector.magnitude(Matter.Vector.sub(enemy.body.position, player.body.position));
+          if (dist > 2000) {
+            const newNode = document.createElement("div");
+            newNode.style.opacity = "0.8";
+            newNode.style.background = "#e06c75";
+            newNode.style.height = "10px";
+            newNode.style.width = "10px";
+            newNode.style.position = "fixed";
+            newNode.style.borderRadius = "10px";
+            const position = Matter.Vector.add(
+              { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+              Matter.Vector.rotate(
+                Matter.Vector.mult(Matter.Vector.normalise(Matter.Vector.sub(enemy.body.position, player.body.position)), 150),
+                0 - player.body.angle
+              )
+            );
+            newNode.style.top = position.y + "px";
+            newNode.style.left = position.x + "px";
+            canvas.appendChild(newNode);
+          }
+        }
+      }
+      requestAnimationFrame(enemyLoop);
+    };
+
+    requestAnimationFrame(enemyLoop);
+
     const generator = Seed(Options.game.RNGSeed);
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 125; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2) }
       );
       this.addGameObject(box);
     }
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 50; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2), particles: 3 }
       );
       this.addGameObject(box);
     }
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 25; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2), particles: 4 }
@@ -134,11 +189,15 @@ export class Game {
       this.addGameObject(box);
     }
 
+    this.engine.enableSleeping = true;
     let lastFrameTime = Date.now();
     // run the engine
     const physicsLoop = () => {
       const frameTime = Date.now();
-      Matter.Engine.update(this.engine, (frameTime - lastFrameTime) * (Options.game.simulationSpeedMultiplier || 1));
+      Matter.Engine.update(
+        this.engine,
+        Math.min((frameTime - lastFrameTime) * (Options.game.simulationSpeedMultiplier || 1), 5000)
+      );
       lastFrameTime = frameTime;
       requestAnimationFrame(physicsLoop);
     };
