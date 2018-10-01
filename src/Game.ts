@@ -2,6 +2,8 @@ import * as Matter from "matter-js";
 import * as PIXI from "pixi.js";
 import * as Seed from "seed-random";
 import Asteroid from "./Asteroid";
+import Debug, { FPSCounter } from "./Debug";
+import globalDebug from "./Debug";
 import GameObject from "./GameObject";
 import Input from "./Input";
 import Options, { IViewportOptions } from "./Options";
@@ -66,6 +68,15 @@ export class Game {
 
     this.pixiTicker = new PIXI.ticker.Ticker();
 
+    globalDebug.show();
+    Input.onKeyDown("f", () => {
+      if (globalDebug.isVisible) {
+        globalDebug.hide();
+      } else {
+        globalDebug.show();
+      }
+    });
+
     Input.onKeyDown(
       "]",
       () => {
@@ -87,6 +98,8 @@ export class Game {
       true
     );
 
+    const rendererFPS = new FPSCounter("rendererFPS");
+
     this.pixiTicker.add(deltaTime => {
       if (this.viewportOptions.followTarget) {
         this.viewport.position = this.viewportOptions.positionUsesLerp
@@ -105,6 +118,8 @@ export class Game {
         gameObject.update(this.viewport);
       }
       this.pixiRenderer.render();
+      Debug.writeEntry("lastRendererFrameTime", Math.round(this.pixiTicker.elapsedMS));
+      rendererFPS.addCount();
     });
 
     Input.startListening();
@@ -126,6 +141,7 @@ export class Game {
         for (let i = 0; i < 4; i++) {
           const enemy = new EnemyShip(this, {
             physics: {
+              angle: enemyGenerator() * Math.PI,
               position: {
                 x: player.body.position.x + (enemyGenerator() - 0.5) * 5000,
                 y: player.body.position.y + (enemyGenerator() - 0.5) * 5000
@@ -167,21 +183,21 @@ export class Game {
     requestAnimationFrame(enemyLoop);
 
     const generator = Seed(Options.game.RNGSeed);
-    for (let i = 0; i < 125; i++) {
+    for (let i = 0; i < 50; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2) }
       );
       this.addGameObject(box);
     }
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 15; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2), particles: 3 }
       );
       this.addGameObject(box);
     }
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 12; i++) {
       const box = new Asteroid(
         { x: generator() * 10000 - 5000, y: generator() * 10000 - 5000 },
         { rotation: generator() * (Math.PI / 2), particles: 4 }
@@ -189,15 +205,17 @@ export class Game {
       this.addGameObject(box);
     }
 
-    this.engine.enableSleeping = true;
+    const physicsFPS = new FPSCounter("physicsFPS");
     let lastFrameTime = Date.now();
     // run the engine
     const physicsLoop = () => {
       const frameTime = Date.now();
       Matter.Engine.update(
         this.engine,
-        Math.min((frameTime - lastFrameTime) * (Options.game.simulationSpeedMultiplier || 1), 5000)
+        Math.min((frameTime - lastFrameTime) * (Options.game.simulationSpeedMultiplier || 1), 100)
       );
+      Debug.writeEntry("lastPhysicsFrameTime", frameTime - lastFrameTime);
+      physicsFPS.addCount();
       lastFrameTime = frameTime;
       requestAnimationFrame(physicsLoop);
     };
@@ -205,21 +223,25 @@ export class Game {
     this.pixiTicker.start();
   }
 
-  public addGameObject(gameObject: GameObject): GameObject {
+  public addGameObject<T extends GameObject>(gameObject: T): T {
     if (!this.stage.objects.find(x => x === gameObject)) {
       gameObject.game = this;
       this.stage.push(gameObject);
       this.pixiRenderer.stage.addChild(gameObject.graphics);
       World.add(this.engine.world, gameObject.body);
+      gameObject.start();
+      Debug.writeEntry("GameObjects", this.stage.objects.length);
     }
-    return gameObject;
+    return gameObject as T;
   }
-  public removeGameObject(gameObject: GameObject): GameObject {
+  public removeGameObject<T extends GameObject>(gameObject: T): T {
     if (this.stage.objects.find(x => x === gameObject)) {
       gameObject.game = undefined;
       World.remove(this.engine.world, gameObject.body);
       this.pixiRenderer.stage.removeChild(gameObject.graphics);
       this.stage.remove(gameObject);
+      gameObject.stop();
+      Debug.writeEntry("GameObjects", this.stage.objects.length);
     }
     return gameObject;
   }

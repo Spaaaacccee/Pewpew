@@ -17,7 +17,7 @@ export default class AI {
   constructor(options: IAIOptions) {
     this.vehicle = options.vehicle;
     this.target = options.target;
-    this.shootSpeed = options.shootSpeed || 200;
+    this.shootSpeed = options.shootSpeed || 500;
   }
   public drive() {
     if (this.vehicle && this.target) {
@@ -34,14 +34,14 @@ export default class AI {
             }
           }
         }
-        if(Utils.between(this.vehicle.body.angularVelocity,-0.3,0.3)) {
+        if(Utils.between(this.vehicle.body.angularVelocity,-0.6,0.6)) {
           this.vehicle.leftThruster();
           this.vehicle.rightThruster();
         }
-        if(this.vehicle.body.angularVelocity > 0.3) {
+        if(this.vehicle.body.angularVelocity > 0.6) {
           this.vehicle.leftThruster();
         }
-        if(this.vehicle.body.angularVelocity < -0.3) {
+        if(this.vehicle.body.angularVelocity < -0.6) {
           this.vehicle.rightThruster();
         }
       } else {

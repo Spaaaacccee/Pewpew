@@ -13,19 +13,42 @@ export interface IGameObjectOptions {
 }
 
 export default class GameObject {
+  public everyFrame: () => void = Utils.noop;
+  public firstFrame: () => void = Utils.noop;
+
   public body: Matter.Body;
   public graphics: PIXI.DisplayObject;
   public game?: Game;
+
+  private started: boolean = false;
+
   constructor(body: Matter.Body, graphics: PIXI.DisplayObject) {
     this.body = body;
     this.graphics = graphics;
+  }
+
+  public onCollision(gameObject: GameObject, selfForce: number, gameObjectForce: number) {
+    return;
+  }
+
+  public start() {
+    this.started = true;
     this.firstFrame();
-    const updateLoop = () => {
-      this.everyFrame();
+    if (this.everyFrame !== Utils.noop) {
+      const updateLoop = () => {
+        this.everyFrame();
+        if (this.started) {
+          requestAnimationFrame(updateLoop);
+        }
+      };
       requestAnimationFrame(updateLoop);
     }
-    requestAnimationFrame(updateLoop);
   }
+
+  public stop() {
+    this.started = false;
+  }
+
   public update(viewport: Viewport): void {
     const screenPosition = viewport.worldToViewportPosition(this.body.position);
     this.graphics.x = screenPosition.x;
@@ -36,13 +59,6 @@ export default class GameObject {
 
   public localToWorldPosition(position: Vector): Vector {
     return Vector.add(this.body.position, Vector.rotate(position, this.body.angle));
-  }
-
-  public everyFrame () : void {
-    Utils.noop();
-  }
-  public firstFrame() : void {
-    Utils.noop();
   }
 }
 
@@ -60,30 +76,30 @@ export class Rectangle extends GameObject {
 export interface IParticleOptions extends IGameObjectOptions {
   despawnAfter?: number;
   opacity?: number;
+  despawnTimeRandomness?: number;
 }
 
 export class Particle extends Rectangle {
   public particleOptions: IParticleOptions;
   public timeOfCreation: number;
+  public despawnAfter: number;
 
   constructor(position: Vector = { x: 0, y: 0 }, size: Vector = { x: 0, y: 0 }, options: IParticleOptions = {}) {
     super(position, size, options);
     this.body.collisionFilter.group = -1;
     this.body.collisionFilter.mask = 0;
     this.graphics.alpha = options.opacity || 1;
+    this.despawnAfter = (options.despawnAfter || 2500) + (Math.random() - 0.5) * (options.despawnTimeRandomness || 1000);
     setTimeout(() => {
       if (this.game) {
         this.game.removeGameObject(this);
       }
-    }, options.despawnAfter || 2500);
+    }, this.despawnAfter);
     this.timeOfCreation = Date.now();
     this.particleOptions = options;
   }
   public update(viewport: Viewport): void {
-    this.graphics.alpha = Math.max(
-      1 - (1 * (Date.now() - this.timeOfCreation)) / (this.particleOptions.despawnAfter || 2500),
-      0
-    );
+    this.graphics.alpha = Math.max(1 - (1 * (Date.now() - this.timeOfCreation)) / this.despawnAfter, 0);
     super.update(viewport);
   }
 }

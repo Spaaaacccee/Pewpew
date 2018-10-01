@@ -1,5 +1,6 @@
 import * as Matter from "matter-js";
 import AI from "./AI";
+import Asteroid from "./Asteroid";
 import Bullet, { IBulletOptions } from "./Bullet";
 import { Game } from "./Game";
 import GameObject, { Particle } from "./GameObject";
@@ -8,6 +9,7 @@ export interface ISpaceshipOptions extends IBulletOptions {
   bulletForce?: number;
   particleColor?: number;
   bulletColor?: number;
+  bulletType?: typeof Bullet;
 }
 
 export default class Spaceship extends Bullet {
@@ -19,14 +21,14 @@ export default class Spaceship extends Bullet {
       { x: (window.innerWidth - 50) / 2, y: 50 },
       { x: 50, y: 50 },
       {
-        collisionVelocityThreshold: options.collisionVelocityThreshold || 3,
+        collisionForceThreshold: options.collisionForceThreshold || 10,
         despawnAfter: 0,
         graphics: options.graphics,
         physics: { ...{ density: 0.01 }, ...options.physics }
       }
     );
     this.spaceshipOptions = {
-      ...{ collisionVelocityThreshold: 3 },
+      ...{ collisionForceThreshold: 10 },
       ...options
     };
   }
@@ -42,11 +44,11 @@ export default class Spaceship extends Bullet {
   public shoot() {
     if (this.game) {
       const bullet = this.game.addGameObject(
-        new Bullet(
+        new (this.spaceshipOptions.bulletType || Bullet)(
           this.game,
           this.localToWorldPosition({ x: 0, y: -25 }),
           { x: 10, y: 15 },
-          { physics: { angle: this.body.angle }, graphics: { color: this.spaceshipOptions.bulletColor } }
+          { physics: { angle: this.body.angle }, graphics: { color: this.spaceshipOptions.bulletColor }, parent: this }
         )
       );
       Matter.Body.applyForce(
@@ -62,21 +64,18 @@ export default class Spaceship extends Bullet {
 
   public explosionParticles() {
     if (this.game) {
-      for (let i = 0; i < 35; i++) {
-        const particle = this.game.addGameObject(
-          new Particle(
-            this.localToWorldPosition({ x: (Math.random()-0.5)*25, y: (Math.random()-0.5)*25 }),
-            { x: 25, y: 25 },
-            { graphics: { color: this.spaceshipOptions.particleColor } }
-          )
-        );
-        Matter.Body.applyForce(
-          particle.body,
-          particle.body.position,
-          Matter.Vector.add(Matter.Vector.rotate({ x: 0, y: 0.005 * Math.random()}, Math.random() * (Math.PI * 2)), Matter.Vector.mult(this.body.velocity,0.0002))
-        );
-        Matter.Body.setAngularVelocity(particle.body, Math.random() * 0.01);
-      }
+      const exploder = this.game.addGameObject(
+        new Asteroid(this.body.position, {
+          dieImmediately: true,
+          explosionEnableDelay: 0,
+          extraParticleCount: 100,
+          particleColor: this.spaceshipOptions.particleColor|| 0x4d90ae,
+          particles: 3,
+          rotation: this.body.angle
+        })
+      );
+      Matter.Body.setVelocity(exploder.body, this.body.velocity);
+      exploder.explode();
     }
   }
 
@@ -124,7 +123,21 @@ export class EnemyShip extends Spaceship {
     });
     this.driver = new AI({ target: options.target, vehicle: this });
   }
-  public everyFrame(): void {
+  public everyFrame = () => {
     this.driver.drive();
+  };
+  public onCollision(gameObject: GameObject, selfForce: number, gameObjectForce: number) {
+    super.onCollision(gameObject, selfForce, gameObjectForce);
+    if (gameObject instanceof Spaceship) {
+      if (selfForce >= (this.bulletOptions.collisionForceThreshold || 10) * 18) {
+        // tslint:disable-next-line:no-console
+        console.log(selfForce);
+        this.explode();
+      }
+    } else if (gameObject instanceof Bullet) {
+      if (selfForce >= (this.bulletOptions.collisionForceThreshold || 10)) {
+        this.explode();
+      }
+    }
   }
 }
